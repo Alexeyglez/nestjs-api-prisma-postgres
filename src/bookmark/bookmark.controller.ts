@@ -1,34 +1,82 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Param,
+  ParseIntPipe,
+  Patch,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
+import { GetUser } from '../auth/decorator';
+import { JwtGuard } from '../auth/guard';
 import { BookmarkService } from './bookmark.service';
-import { CreateBookmarkDto } from './dto/create-bookmark.dto';
-import { UpdateBookmarkDto } from './dto/update-bookmark.dto';
+import {
+  CreateBookmarkDto,
+  EditBookmarkDto,
+} from './dto';
 
-@Controller('bookmark')
+@UseGuards(JwtGuard)
+@Controller('bookmarks')
 export class BookmarkController {
-  constructor(private readonly bookmarkService: BookmarkService) {}
-
-  @Post()
-  create(@Body() createBookmarkDto: CreateBookmarkDto) {
-    return this.bookmarkService.create(createBookmarkDto);
-  }
+  constructor(
+    private readonly bookmarkService: BookmarkService,
+  ) {}
 
   @Get()
-  findAll() {
-    return this.bookmarkService.findAll();
+  getBookmarks(@GetUser('id') userId: number) {
+    return this.bookmarkService.getBookmarks(
+      userId,
+    );
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.bookmarkService.findOne(+id);
+  getBookmarkById(
+    @GetUser('id') userId: number,
+    @Param('id', ParseIntPipe) bookmarkId: number,
+  ) {
+    return this.bookmarkService.getBookmarkById(
+      userId,
+      bookmarkId,
+    );
+  }
+
+  @Post()
+  createBookmark(
+    @GetUser('id') userId: number,
+    @Body() dto: CreateBookmarkDto,
+  ) {
+    return this.bookmarkService.createBookmark(
+      userId,
+      dto,
+    );
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateBookmarkDto: UpdateBookmarkDto) {
-    return this.bookmarkService.update(+id, updateBookmarkDto);
+  editBookmarkById(
+    @GetUser('id') userId: number,
+    @Param('id', ParseIntPipe) bookmarkId: number,
+    @Body() dto: EditBookmarkDto,
+  ) {
+    return this.bookmarkService.editBookmarkById(
+      userId,
+      bookmarkId,
+      dto,
+    );
   }
 
+  @HttpCode(HttpStatus.NO_CONTENT)
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.bookmarkService.remove(+id);
+  deleteBookmarkById(
+    @GetUser('id') userId: number,
+    @Param('id', ParseIntPipe) bookmarkId: number,
+  ) {
+    return this.bookmarkService.deleteBookmarkById(
+      userId,
+      bookmarkId,
+    );
   }
 }
